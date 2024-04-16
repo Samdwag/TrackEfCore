@@ -2,8 +2,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Configuration;
-using System.Data.Common;
 
 namespace TrackEfCore
 {
@@ -11,10 +9,8 @@ namespace TrackEfCore
     {
         public static async Task Run()
         {
-            using (var context = new DbContext())
+            using (var context = new TrackContext())
             {
-                await context.Database.EnsureCreatedAsync();
-
                 bool exit = false;
                 while (!exit)
                 {
@@ -65,7 +61,7 @@ namespace TrackEfCore
             }
         }
 
-        static async Task AddResult(DbContext context)
+        static async Task AddResult(TrackContext context)
         {
             Console.WriteLine("Enter the event name:");
             string eventName = Console.ReadLine();
@@ -77,32 +73,37 @@ namespace TrackEfCore
             string gender = Console.ReadLine();
 
             Console.WriteLine("Enter the result:");
-            decimal result = Convert.ToDecimal(Console.ReadLine());
-
-            var newResult = new TrackResult
+            if (decimal.TryParse(Console.ReadLine(), out decimal result))
             {
-                Event = eventName,
-                Name = name,
-                Gender = gender,
-                Result = result
-            };
+                var newResult = new TrackResult
+                {
+                    Event = eventName,
+                    Name = name,
+                    Gender = gender,
+                    Result = result
+                };
 
-            context.TrackResults.Add(newResult);
-            await context.SaveChangesAsync();
-            Console.WriteLine("Result added successfully!");
-        }
-
-        static async Task ListResults(DbContext context)
-        {
-            var results = await context.TrackResults.ToListAsync();
-            Console.WriteLine("ID\tEvent\t\t\tName\t\tGender\tResult");
-            foreach (var result in results)
+                context.TrackResults.Add(newResult);
+                await context.SaveChangesAsync(); // Use async method here
+                Console.WriteLine("Result added successfully!");
+            }
+            else
             {
-                Console.WriteLine($"{result.Id}\t{result.Event}\t\t{result.Name}\t\t{result.Gender}\t{result.Result}");
+                Console.WriteLine("Invalid result format. Please enter a valid decimal number.");
             }
         }
 
-        static async Task UpdateResult(DbContext context)
+        static async Task ListResults(TrackContext context)
+        {
+            var results = await context.TrackResults.ToListAsync(); // Use async method here
+            Console.WriteLine("ID\t\tEvent\t\t\tName\t\tGender\t\tResult");
+            foreach (var result in results)
+            {
+                Console.WriteLine($"{result.Id}\t\t{result.Event}\t\t\t{result.Name}\t\t{result.Gender}\t\t{result.Result}");
+            }
+        }
+
+        static async Task UpdateResult(TrackContext context)
         {
             Console.WriteLine("Enter the ID of the result you want to update:");
             if (int.TryParse(Console.ReadLine(), out int id))
@@ -120,10 +121,16 @@ namespace TrackEfCore
                     resultToUpdate.Gender = Console.ReadLine();
 
                     Console.WriteLine("Enter the new result:");
-                    resultToUpdate.Result = Convert.ToDecimal(Console.ReadLine());
-
-                    await context.SaveChangesAsync();
-                    Console.WriteLine("Result updated successfully!");
+                    if (decimal.TryParse(Console.ReadLine(), out decimal newResult))
+                    {
+                        resultToUpdate.Result = newResult;
+                        await context.SaveChangesAsync(); // Use async method here
+                        Console.WriteLine("Result updated successfully!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid result format. Please enter a valid decimal number.");
+                    }
                 }
                 else
                 {
@@ -136,7 +143,7 @@ namespace TrackEfCore
             }
         }
 
-        static async Task RemoveResult(DbContext context)
+        static async Task RemoveResult(TrackContext context)
         {
             Console.WriteLine("Enter the ID of the result you want to remove:");
             if (int.TryParse(Console.ReadLine(), out int id))
@@ -145,7 +152,7 @@ namespace TrackEfCore
                 if (resultToRemove != null)
                 {
                     context.TrackResults.Remove(resultToRemove);
-                    await context.SaveChangesAsync();
+                    await context.SaveChangesAsync(); // Use async method here
                     Console.WriteLine("Result removed successfully!");
                 }
                 else
@@ -159,10 +166,10 @@ namespace TrackEfCore
             }
         }
 
-        static async Task RemoveAllResults(DbContext context)
+        static async Task RemoveAllResults(TrackContext context)
         {
             context.TrackResults.RemoveRange(context.TrackResults);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(); // Use async method here
             Console.WriteLine("All results removed successfully!");
         }
     }

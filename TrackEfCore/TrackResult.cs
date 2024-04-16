@@ -14,7 +14,6 @@ namespace TrackEfCore
         public string Event { get; set; }
         public string Name { get; set; }
         public string Gender { get; set; }
-        public decimal Result { get; set; } 
+        public decimal Result { get; set; }
     }
-
 }
